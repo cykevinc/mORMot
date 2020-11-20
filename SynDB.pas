@@ -4137,15 +4137,20 @@ var Stmt: TSQLDBStatement;
       end;
     except
       on E: Exception do begin
-        {$ifndef SYNDB_SILENCE}
-        with SynDBLog.Add do
-          if [sllSQL,sllDB,sllException,sllError]*Family.Level<>[] then
-            LogLines(sllSQL,pointer(Stmt.SQLWithInlinedParams),self,'--');
-        {$endif}
-        Stmt.Free;
-        result := nil;
         StringToUTF8(E.Message,fErrorMessage);
-        fErrorException := PPointer(E)^;
+        fErrorException := PPointer(E)^; 
+        if assigned(Stmt) then begin
+           {$ifndef SYNDB_SILENCE}
+           with SynDBLog.Add do
+             if [sllSQL,sllDB,sllException,sllError]*Family.Level<>[] then
+               LogLines(sllSQL,pointer(Stmt.SQLWithInlinedParams),self,'--');
+           {$endif}
+           Stmt.Free;
+        end else
+           with SynDBLog.Add do
+             if [sllSQL,sllDB,sllException,sllError]*Family.Level<>[] then
+               LogLines(sllSQL,pointer(fErrorMessage),self,'--');
+        result := nil;
         if doraise then
           raise;
       end;
